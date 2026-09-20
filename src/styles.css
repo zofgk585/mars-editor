@@ -1,0 +1,2070 @@
+/* ============================================================
+   火星编辑器 · 应用外壳样式
+   暖纸底 + 氛围光 + 噪点 + 毛玻璃 + 陶土橙强调
+   （文章正文样式全部内联，本文件不含正文样式）
+   ============================================================ */
+
+:root {
+  --bg: #f3f0ea;             /* 画布（暖米灰） */
+  --bg-glow-1: #f3e6dc;      /* 陶土氛围光（克制，避免大面积渐变感） */
+  --bg-glow-2: #eae8e0;      /* 暖沙氛围光 */
+  --panel: rgba(255, 253, 250, 0.82);
+  --panel-solid: #fffdfa;
+  --border: rgba(60, 54, 44, 0.1);
+  --border-strong: rgba(60, 54, 44, 0.18);
+  --ink: #34302a;
+  --muted: #8a857a;
+  --faint: #b0ab9f;
+  --accent: #d97757;
+  --accent-strong: #c76545;
+  --accent-soft: #f9eee7;
+  --shadow-lg: 0 24px 64px rgba(52, 40, 28, 0.14), 0 2px 8px rgba(52, 40, 28, 0.05);
+  --shadow-sm: 0 1px 2px rgba(52, 40, 28, 0.06);
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --serif: Georgia, 'Songti SC', 'SimSun', 'Times New Roman', serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* 氛围光 */
+  background:
+    radial-gradient(760px 380px at 88% -14%, var(--bg-glow-1) 0%, transparent 62%),
+    radial-gradient(680px 420px at -10% 112%, var(--bg-glow-2) 0%, transparent 58%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* 噪点纹理（整体盖一层，增加纸质感） */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 90;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+button {
+  font-family: inherit;
+}
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------- 顶栏（毛玻璃） ---------------- */
+
+.toolbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 9px 20px;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: 1px solid var(--border);
+  z-index: 40;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+/* 印章字标：平涂描边，没有渐变/投影 */
+.brand-mark {
+  width: 23px;
+  height: 23px;
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.title {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.6px;
+  color: var(--ink);
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* 对照 / 预览 分段控件 */
+.segmented {
+  display: inline-flex;
+  background: rgba(60, 54, 44, 0.055);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 1px;
+}
+
+.seg-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 13px;
+  font-size: 12.5px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: background 0.16s var(--ease), color 0.16s var(--ease);
+}
+
+.seg-btn:hover {
+  color: var(--ink);
+}
+
+.seg-btn.active {
+  background: var(--panel-solid);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---------------- 左侧主题竖栏 ---------------- */
+
+.theme-rail {
+  flex: none;
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-right: 14px;
+  /* 顶部不留内边距：让「主题」标题与其它三个面板头落在同一条基线上 */
+  padding: 0 10px 10px;
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.theme-rail:hover {
+  box-shadow: 0 4px 20px rgba(52, 40, 28, 0.08);
+  border-color: rgba(60, 54, 44, 0.14);
+}
+
+.rail-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 4px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  color: var(--muted);
+}
+
+.rail-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* 主题较多时留出滚动条空间，避免卡片被裁 */
+  padding-right: 2px;
+}
+
+.rail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* 分区小标题：比面板标题更轻，只做归类不抢注意力 */
+.rail-section-label {
+  padding: 0 2px 1px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--faint);
+}
+
+/* 主题卡片：迷你纸样 + 名称 */
+.theme-card {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-solid);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  transition: transform 0.18s var(--ease), border-color 0.18s var(--ease),
+    box-shadow 0.18s var(--ease);
+}
+
+.theme-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  box-shadow: 0 4px 14px rgba(52, 40, 28, 0.1);
+}
+
+.theme-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.18), 0 4px 14px rgba(52, 40, 28, 0.1);
+}
+
+/* 纸样：底色/字体/强调色全部取自该主题自身的令牌 */
+.theme-card .swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 8px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.theme-card .swatch-aa {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.3px;
+}
+
+.theme-card .swatch-bar {
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+  margin: 1px 0 2px;
+}
+
+.theme-card .swatch-line {
+  height: 2px;
+  border-radius: 2px;
+  opacity: 0.26;
+}
+
+.theme-card .swatch-line.short {
+  width: 62%;
+}
+
+.theme-card-name {
+  padding: 5px 7px 6px;
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--muted);
+  transition: color 0.18s var(--ease);
+}
+
+.theme-card.active .theme-card-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* 按钮（纯色，无渐变） */
+.btn {
+  height: 32px;
+  border: 1px solid var(--border);
+  background: rgba(255, 253, 250, 0.7);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  transition: background 0.16s var(--ease), border-color 0.16s var(--ease);
+}
+
+.btn:hover {
+  background: var(--panel-solid);
+  border-color: var(--border-strong);
+}
+
+.btn:active {
+  background: rgba(60, 54, 44, 0.05);
+}
+
+.btn svg {
+  flex: none;
+  opacity: 0.85;
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn.primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.btn.primary:active {
+  background: var(--accent-strong);
+}
+
+.btn.primary svg {
+  opacity: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ---------------- 文件树面板 ---------------- */
+
+.file-tree {
+  flex: none;
+  width: 208px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-right: 14px;
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.file-tree:hover {
+  box-shadow: 0 4px 20px rgba(52, 40, 28, 0.08);
+  border-color: rgba(60, 54, 44, 0.14);
+}
+
+.tree-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 7px 10px 7px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tree-head-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  color: var(--muted);
+}
+
+.tree-new {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.tree-new:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.tree-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+/* 根目录行 */
+.tree-folder {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 6px 6px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.tree-folder:hover {
+  background: rgba(60, 54, 44, 0.05);
+}
+
+.tree-folder svg {
+  flex: none;
+  opacity: 0.7;
+}
+
+.tree-folder-name {
+  letter-spacing: 0.2px;
+}
+
+.tree-count {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--faint);
+  background: rgba(60, 54, 44, 0.06);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+
+/* 文件层级：缩进 + 竖向引导线 */
+.tree-children {
+  margin: 2px 0 0 13px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tree-file {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  transition: background 0.12s ease;
+}
+
+.tree-file:hover {
+  background: rgba(60, 54, 44, 0.05);
+}
+
+.tree-file.active {
+  background: var(--accent-soft);
+}
+
+.tree-file-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: transparent;
+  padding: 6px 4px 6px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink);
+}
+
+.tree-file-main svg {
+  flex: none;
+  opacity: 0.55;
+}
+
+.tree-file.active .tree-file-main svg {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.tree-file-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tree-file-name {
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-file.active .tree-file-name {
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.tree-file-meta {
+  font-size: 9.5px;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 行内操作：hover / 选中时显形，避免常显造成视觉噪音 */
+.tree-file-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding-right: 4px;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+.tree-file:hover .tree-file-actions,
+.tree-file:focus-within .tree-file-actions {
+  opacity: 1;
+}
+
+.tree-file-actions button {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.tree-file-actions button:hover {
+  background: rgba(255, 253, 250, 0.9);
+  color: var(--accent-strong);
+}
+
+/* 图片库：占用大小、未引用标记、清理入口 */
+.tree-size {
+  margin-left: auto;
+  font-size: 9.5px;
+  font-weight: 500;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.tree-size + .tree-count {
+  margin-left: 5px;
+}
+
+.tree-file.unused .tree-file-name {
+  color: var(--muted);
+}
+
+.tree-file.unused .tree-file-meta {
+  color: #a8700c;
+}
+
+.tree-empty {
+  margin: 4px 6px 6px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+.tree-cleanup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 3px;
+  padding: 6px 6px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.tree-cleanup:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.tree-file.renaming {
+  gap: 7px;
+  padding: 5px 6px;
+  background: var(--panel-solid);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.18);
+}
+
+.tree-file.renaming > svg {
+  flex: none;
+  opacity: 0.55;
+}
+
+.tree-rename-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--ink);
+  outline: none;
+}
+
+/* ---------------- 工作区（可拖拽分割） ---------------- */
+
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 16px;
+}
+
+.split {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+/* 拖拽条（一小段分割线常显，hover/拖拽时高亮加长） */
+.split-bar {
+  flex: none;
+  width: 16px;
+  margin: 0 -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  z-index: 5;
+}
+
+.split-bar::after {
+  content: '';
+  width: 3px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(60, 54, 44, 0.18);
+}
+
+.split-bar:hover::after,
+.split-dragging .split-bar::after {
+  background: var(--accent);
+  height: 64px;
+  box-shadow: 0 0 8px rgba(217, 119, 87, 0.5);
+}
+
+/* 左侧源码面板：默认占主体，预览保留 430px 最小宽度 */
+.editor-side {
+  flex: 0 0 auto;
+  width: calc(100% - 430px);
+  max-width: calc(100% - 430px);
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease),
+    width 0.3s var(--ease), flex-basis 0.3s var(--ease), opacity 0.3s var(--ease);
+}
+
+.editor-side:hover {
+  box-shadow: 0 4px 20px rgba(52, 40, 28, 0.08);
+  border-color: rgba(60, 54, 44, 0.14);
+}
+
+/* 拖拽中：禁用宽度过渡，保证分割条跟手 */
+.editor-side.no-transition {
+  transition: none;
+}
+
+/* 预览模式：源码面板收起 */
+.editor-side.collapsed {
+  flex-basis: 0;
+  width: 0;
+  min-width: 0;
+  border: none;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.workspace.mode-preview .split-bar {
+  display: none;
+}
+
+/* 右侧预览面板 */
+.preview-side {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.preview-side:hover {
+  box-shadow: 0 4px 20px rgba(52, 40, 28, 0.08);
+  border-color: rgba(60, 54, 44, 0.14);
+}
+
+/* 面板头 */
+.pane-head {
+  flex: none;
+  min-height: 40px;
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pane-title {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 1.1px;
+}
+
+.pane-head-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Preview device switch: the shared segmented control, shrunk to the head's
+   quiet 11px scale so it sits beside the stats instead of shouting over them */
+.pane-head .device-switch {
+  flex: none;
+  /* Equal columns, each as wide as the longest label, so the active pill is
+     the same size whichever device is on */
+  display: inline-grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.pane-head .device-switch .seg-btn {
+  padding: 2px 9px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* In a narrow pane the image notice gives way to the switch */
+.preview-side .pane-stat.warn {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 状态 chip */
+/* 面板头状态：一律用安静的文字，靠颜色而不是彩色药丸传达状态。
+   原来三个不同底色的胶囊（绿色已保存 + 呼吸圆点、米色字数、琥珀提示）
+   在一条 40px 的头部里互相抢注意力，信息量却很低。 */
+.pane-stat {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--faint);
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+
+.pane-stat.count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 接近 / 超出微信 2 万字上限：只换文字颜色 */
+.pane-stat.count-warn {
+  color: #a8700c;
+}
+
+.pane-stat.count-over {
+  color: #b3402f;
+  font-weight: 600;
+}
+
+/* 含图片提示：需要被看见，但仍然只是一行字 */
+.pane-stat.warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #96592c;
+}
+
+.pane-stat.warn::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+/* ---------------- 左侧编辑器（CodeMirror 6） ---------------- */
+
+/* Markdown 格式工具栏 */
+.md-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.md-toolbar-btn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.md-toolbar-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.md-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 5px;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 标题层级下拉菜单 */
+.md-toolbar-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.md-toolbar-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 148px;
+  background: rgba(255, 253, 250, 0.96);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(45, 40, 30, 0.14);
+  padding: 4px;
+  z-index: 50;
+  animation: menu-in 0.14s var(--ease);
+  transform-origin: top left;
+}
+
+.md-toolbar-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--ink);
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.md-toolbar-menu button:hover {
+  background: var(--accent-soft);
+}
+
+.md-toolbar-menu .menu-heading {
+  flex: none;
+  color: var(--accent);
+}
+
+/* 大纲抽屉 */
+.outline-toggle {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.outline-toggle:hover,
+.outline-toggle.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.outline-drawer {
+  flex: none;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.outline-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.outline-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.outline-item.lv1 {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.outline-empty {
+  margin: 6px 10px;
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.code-edit {
+  flex: 1;
+  min-height: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.code-edit .cm-editor {
+  height: 100%;
+}
+
+.code-edit .cm-editor.cm-focused {
+  outline: none;
+}
+
+/* CodeMirror 滚动条沿用全局样式 */
+.code-edit .cm-scroller::-webkit-scrollbar,
+.phone-stage::-webkit-scrollbar,
+.article-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* ---------------- Preview: iPhone / iPhone Duo / desktop, picked by hand ---------------- */
+
+/* 文章主题令牌（由 PreviewPane 从当前主题注入到 :root，
+   供预览壳层（状态栏/文章头/底栏）跟随主题配色） */
+:root {
+  --art-bg: #ffffff;
+  --art-ink: #2b2b28;
+  --art-accent: #d97757;
+  --art-heading: #1f1f1c;
+  --art-heading-font: var(--serif);
+  --art-hr: #e5e3dc;
+  --art-foot-text: #8a867e;
+}
+
+.phone-stage {
+  flex: 1;
+  overflow: auto;
+  padding: 26px 20px 40px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  /* 舞台光晕 */
+  background:
+    radial-gradient(520px 300px at 50% 20%, rgba(217, 119, 87, 0.08), transparent 72%),
+    transparent;
+}
+
+/* iPhone 设备框：钛金属边框 + 细高光内圈 */
+.phone-frame {
+  position: relative;
+  width: 420px;
+  max-width: 100%;
+  height: 100%;
+  /* iPhone 的圆角是连续曲率，半径给大一些更接近真机观感 */
+  border-radius: 56px;
+  padding: 11px;
+  background: linear-gradient(148deg, #6f6a63 0%, #302c27 26%, #1d1a17 52%, #3a3630 78%, #6b665f 100%);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.55);
+}
+
+/* 侧键：左侧操作/音量，右侧电源 */
+.phone-frame .side-btn {
+  position: absolute;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #514c45, #2a2622);
+}
+
+.phone-frame .side-btn.action {
+  left: -3px;
+  top: 104px;
+  height: 30px;
+}
+
+.phone-frame .side-btn.vol-up {
+  left: -3px;
+  top: 150px;
+  height: 54px;
+}
+
+.phone-frame .side-btn.vol-down {
+  left: -3px;
+  top: 216px;
+  height: 54px;
+}
+
+.phone-frame .side-btn.power {
+  right: -3px;
+  top: 168px;
+  height: 78px;
+  background: linear-gradient(270deg, #514c45, #2a2622);
+}
+
+.phone-screen {
+  position: relative;
+  height: 100%;
+  border-radius: 45px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--art-bg);
+  color: var(--art-ink);
+  /* 手机模式：整体缩放，呈现真实手机阅读尺寸 */
+  zoom: 0.92;
+  transition: none;
+}
+
+/* Mac 窗口标题栏（桌面模式显示） */
+.desktop-bar {
+  display: none;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: #f4f1eb;
+  border-bottom: 1px solid rgba(60, 54, 44, 0.1);
+  position: relative;
+}
+
+.desktop-bar .traffic {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.desktop-bar .traffic.t1 {
+  background: #ff5f57;
+}
+
+.desktop-bar .traffic.t2 {
+  background: #febc2e;
+}
+
+.desktop-bar .traffic.t3 {
+  background: #28c840;
+}
+
+.desktop-bar .bar-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a857a;
+}
+
+/* 手机状态栏（跟随主题） */
+.statusbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* 灵动岛占据顶部中央，状态栏内容分列两侧 */
+  padding: 15px 26px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  position: relative;
+  z-index: 5;
+  color: var(--art-heading);
+  background: var(--art-bg);
+  transition: none;
+}
+
+.statusbar .time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 灵动岛（Dynamic Island）：药丸形，压在状态栏中央 */
+.statusbar .dynamic-island {
+  position: absolute;
+  left: 50%;
+  top: 7px;
+  transform: translateX(-50%);
+  width: 84px;
+  height: 25px;
+  border-radius: 999px;
+  background: #0b0a09;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+/* 摄像头：灵动岛右侧的一点微光 */
+.statusbar .dynamic-island::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 32%, #2f3a44 0%, #14181c 62%, #0b0a09 100%);
+}
+
+.statusbar .sb-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 文章滚动区 */
+.article-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* 底部 home indicator：浮在内容之上，正文从下面滚过 */
+.home-indicator {
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  transform: translateX(-50%);
+  width: 116px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--art-ink);
+  opacity: 0.32;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* 文章头：标题 + 作者行 */
+.article-head {
+  padding: 26px 28px 0;
+  background: var(--art-bg);
+  transition: none;
+}
+
+.article-head .head-title {
+  font-family: var(--art-heading-font);
+  font-weight: 700;
+  font-size: 25px;
+  line-height: 1.35;
+  color: var(--art-heading);
+  margin: 0;
+  transition: none;
+}
+
+.article-head .meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--art-hr);
+  transition: none;
+}
+
+.article-head .author {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--art-ink);
+  transition: none;
+}
+
+.article-head .byline {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--art-foot-text);
+  transition: none;
+}
+
+.article-head .byline::before {
+  content: '·';
+  margin-right: 8px;
+  color: var(--art-foot-text);
+}
+
+/* 文章底栏：分享 / 收藏 / 在看 / 点赞（内容末尾，流式） */
+.article-footer {
+  position: static;
+  padding: 14px 28px 24px;
+  background: var(--art-bg);
+  border-top: 1px solid var(--art-hr);
+  transition: none;
+}
+
+.article-footer .actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.article-footer .action {
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--art-foot-text);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.article-footer .action:hover {
+  color: var(--art-accent);
+  background: rgba(217, 119, 87, 0.08);
+}
+
+/* 正文容器：样式全部内联 ⇒ 预览与导出（微信粘贴）同构 */
+.check-body {
+  padding: 6px 28px 8px;
+}
+
+/* ---------------- iPhone Duo ----------------
+   Apple's book-style foldable (announced 2026-09-09). Screen sizes follow
+   Apple's spec sheet; the point sizes are derived at @3x, since Apple
+   publishes none. Everything else — bezel, radii, the camera plateau, the
+   button positions — is measured off Apple's product photos: close, not exact.
+
+   "Duo 外屏" lays the device open, outside up, the way Apple photographs it:
+   the back half on the left, the outer screen on the right. Both Duo views are
+   landscape objects with fixed proportions; PreviewPane zooms the whole frame
+   to fit the stage. Keep the frame sizes in step with DUO_FRAMES there. */
+
+/* Star White: near-uniform matte white glass in a thin, neutral steel rim */
+.preview-side[data-device^='duo'] {
+  --duo-rim: linear-gradient(148deg, #f4f4f2 0%, #8e8d89 12%, #e4e3df 26%, #6e6d69 44%, #d6d5d1 60%, #7f7e7a 78%, #f0efec 100%);
+  --duo-glass: linear-gradient(170deg, #f6f6f5 0%, #f1f1ef 50%, #ebebe9 100%);
+  --duo-key: rgba(255, 255, 255, 0.5); /* a gentle brightening toward the top */
+  --duo-falloff: rgba(0, 0, 0, 0.035); /* neutral shade toward the bottom-right */
+  --duo-seam: rgba(0, 0, 0, 0.22); /* hairline where glass meets metal */
+  --duo-plateau: linear-gradient(180deg, #fbfbfa 0%, #f6f6f5 60%, #f0f0ee 100%);
+  --duo-plateau-lip: rgba(255, 255, 255, 1);
+  --duo-ring: conic-gradient(from 205deg, #ffffff, #9d9c98 12%, #f4f4f2 25%, #6a6965 40%, #e7e7e4 55%, #86857f 72%, #fafaf9 88%, #ffffff);
+  --duo-logo-a: #e4e4e2;
+  --duo-logo-b: #dad9d7;
+  --duo-logo-sheen: #e9e9e7;
+  --duo-logo-lip: rgba(255, 255, 255, 0.6);
+}
+
+/* Night Sky under a dark paper (the web build has no shell dark mode, so the
+   article theme's appearance decides): deep navy glass, a darker polished rim */
+.preview-side[data-appearance='dark'][data-device^='duo'] {
+  --duo-rim: linear-gradient(148deg, #a9b2c2 0%, #3b4250 12%, #7e8797 26%, #1b1f28 44%, #6d7686 60%, #2a303c 78%, #9aa3b3 100%);
+  --duo-glass: linear-gradient(170deg, #4b5871 0%, #3e4a62 45%, #323d52 100%);
+  --duo-key: rgba(205, 218, 245, 0.18);
+  --duo-falloff: rgba(0, 4, 18, 0.26);
+  --duo-seam: rgba(0, 0, 0, 0.45);
+  --duo-plateau: linear-gradient(180deg, #53607a 0%, #46526b 55%, #3c475e 100%);
+  --duo-plateau-lip: rgba(200, 214, 242, 0.35);
+  --duo-ring: conic-gradient(from 205deg, #dde4f0, #58637a 10%, #b8c2d4 22%, #262d3d 38%, #a2adc2 52%, #3a4459 70%, #d0d8e6 86%, #dde4f0);
+  --duo-logo-a: #4f5b73;
+  --duo-logo-b: #44506a;
+  --duo-logo-sheen: #56627a;
+  --duo-logo-lip: rgba(200, 214, 242, 0.22);
+}
+
+.preview-side[data-device^='duo'] .phone-stage {
+  align-items: center;
+}
+
+.preview-side[data-device^='duo'] .phone-frame {
+  flex: none;
+  max-width: none;
+  display: flex;
+  gap: 2px; /* the hinge seam: the rim shows through between the halves */
+  padding: 4px; /* the polished rim */
+  background: var(--duo-rim);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 0.75px rgba(0, 0, 0, 0.35), /* where the metal meets the air */
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45); /* the polished lip */
+}
+
+/* The screen sits in a black bezel, inside the rim */
+.preview-side[data-device^='duo'] .phone-screen {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 8px solid #070707;
+}
+
+.preview-side[data-device^='duo'] .side-btn {
+  background: var(--duo-rim);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.25);
+}
+
+.preview-side[data-device^='duo'] .side-btn.action {
+  display: none;
+}
+
+/* Two buttons on the top edge of the back half, one on its outer side */
+.preview-side[data-device^='duo'] .side-btn.vol-up,
+.preview-side[data-device^='duo'] .side-btn.vol-down {
+  top: -3px;
+  width: 57px;
+  height: 3px;
+}
+
+/* Status: no bar across the top. The time and one status ring — Wi-Fi inside,
+   signal as dots along the bottom — stack in the top-right corner, and the
+   article runs up underneath like any iOS content. */
+.statusbar .sb-orb {
+  display: none;
+}
+
+.preview-side[data-device^='duo'] .statusbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 20px 22px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  background: transparent;
+}
+
+.preview-side[data-device^='duo'] .sb-icons {
+  display: none;
+}
+
+/* The status ring: a circle, solid over the top and down both sides,
+   its bottom finished in a run of dots. The Wi-Fi fan sits in its upper half,
+   and every stroke carries the same weight as the fan. */
+.preview-side[data-device^='duo'] .sb-orb {
+  display: block;
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+}
+
+.sb-orb .ring,
+.sb-orb .wifi {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* With no bar holding it down, the article head takes the top inset itself */
+.preview-side[data-device^='duo'] .article-head {
+  padding-top: 44px;
+}
+
+/* A roomier side margin on the Duo's wider screens */
+.preview-side[data-device^='duo'] .article-head,
+.preview-side[data-device^='duo'] .check-body,
+.preview-side[data-device^='duo'] .article-footer {
+  padding-left: 36px;
+  padding-right: 36px;
+}
+
+/* Only the title wraps before the stack; the byline divider keeps the full measure */
+.preview-side[data-device^='duo'] .article-head .head-title {
+  padding-right: 28px;
+}
+
+/* The inner screen's camera sits under the display: no island there */
+.preview-side[data-device='duo-open'] .dynamic-island {
+  display: none;
+}
+
+/* The outer screen keeps its Dynamic Island — at rest, a small round camera
+   cutout heading the status stack, a little narrower than the ring below */
+.preview-side[data-device='duo'] .statusbar {
+  padding-top: 16px;
+}
+
+.preview-side[data-device='duo'] .statusbar .dynamic-island {
+  position: relative;
+  left: auto;
+  top: auto;
+  order: -1;
+  transform: none;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 3px;
+}
+
+/* The lens, centred in the cutout */
+.preview-side[data-device='duo'] .statusbar .dynamic-island::after {
+  right: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+}
+
+/* The title wraps before the stack */
+.preview-side[data-device='duo'] .article-head .head-title {
+  padding-right: 32px;
+}
+
+/* ---- Outside: back half + outer screen ---- */
+
+.preview-side[data-device='duo'] .phone-frame {
+  width: 897px; /* 2 × 443.5px halves + 2px seam + 2 × 4px rim */
+  height: 647px; /* (678pt + 2 × 8px bezel) × 0.92 zoom + rim */
+  border-radius: 59px;
+}
+
+.preview-side[data-device='duo'] .side-btn.vol-up {
+  left: 104px;
+}
+
+.preview-side[data-device='duo'] .side-btn.vol-down {
+  left: 182px;
+}
+
+.preview-side[data-device='duo'] .side-btn.power {
+  right: auto;
+  left: -3px;
+  top: 175px;
+  height: 114px;
+}
+
+/* The back glass: cool and frosted, lit from the top-left and falling off to
+   the bottom-right; a hairline seam where it meets the rim, and a little shade
+   where it dips into the hinge */
+.duo-back {
+  position: relative;
+  flex: none;
+  width: 443.5px; /* matches the screen half beside it */
+  border-radius: 55px 0 0 55px;
+  background:
+    radial-gradient(130% 80% at 10% 0%, var(--duo-key), transparent 60%),
+    radial-gradient(110% 75% at 100% 100%, var(--duo-falloff), transparent 68%),
+    var(--duo-glass);
+  box-shadow:
+    0 0 0 0.5px var(--duo-seam),
+    inset 0 0 26px rgba(0, 0, 0, 0.035),
+    inset -3px 0 4px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* The camera plateau: the same glass, raised. No outline — its shape comes
+   from light alone: a lit top face, a lip of highlight, a soft shadow cast
+   down the back from its lower edge */
+.duo-plateau {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 311px;
+  height: 122px;
+  border-radius: 61px;
+  background: var(--duo-plateau);
+  box-shadow:
+    0 1.5px 2px rgba(0, 0, 0, 0.07),
+    0 12px 24px -12px rgba(0, 0, 0, 0.28),
+    inset 0 1px 1px var(--duo-plateau-lip),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.045);
+}
+
+/* Each lens: a thin polished ring around a wide, deep glass — the ring is
+   only a sliver of the diameter; the glass shows its stacked elements */
+.duo-lens {
+  position: absolute;
+  top: 15.5px;
+  width: 91px;
+  height: 91px;
+  border-radius: 50%;
+  background: var(--duo-ring);
+  box-shadow:
+    0 3px 6px -2px rgba(0, 0, 0, 0.3),
+    0 0 0 0.5px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1.5px rgba(0, 0, 0, 0.25);
+}
+
+.duo-lens.l1 {
+  left: 9px;
+}
+
+.duo-lens.l2 {
+  left: 111px;
+}
+
+/* The glass: black, with the lens elements stacked inside it — an inner
+   barrel ring, a faint mid ring, a deep blue centre, one catch of light */
+.duo-lens::before {
+  content: '';
+  position: absolute;
+  inset: 4.5px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 37% 31%, rgba(255, 255, 255, 0.55) 0 1.4%, rgba(255, 255, 255, 0.06) 3%, transparent 5%),
+    radial-gradient(circle, #2b3659 0 6%, #121828 9%, transparent 12%),
+    radial-gradient(circle, transparent 0 29%, rgba(95, 105, 135, 0.35) 30.5%, transparent 34%),
+    radial-gradient(circle, transparent 0 52%, rgba(255, 255, 255, 0.06) 53%, transparent 56%),
+    radial-gradient(circle, #0c0d11 0 60%, #050506 80%, #17181c 100%);
+  box-shadow: 0 0 0 1px #0a0a0b, inset 0 2px 5px rgba(0, 0, 0, 0.8);
+}
+
+/* A soft reflection across the upper glass */
+.duo-lens::after {
+  content: '';
+  position: absolute;
+  inset: 4.5px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.09), transparent 42%);
+  pointer-events: none;
+}
+
+/* The mic: a slot cut into the glass */
+.duo-mic {
+  position: absolute;
+  left: 239px;
+  top: 32px;
+  width: 18px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0f0f10, #2a2a2c);
+  box-shadow: inset 0 1px 1.5px rgba(0, 0, 0, 0.7), 0 0.5px 0 var(--duo-plateau-lip);
+}
+
+/* The flash: a translucent diffuser, neutral rather than yellow when off */
+.duo-flash {
+  position: absolute;
+  left: 238px;
+  top: 74px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle, transparent 0 1.6px, rgba(0, 0, 0, 0.05) 1.6px 2.2px),
+    radial-gradient(circle at 45% 40%, #fbfaf6, #e4e1d8 58%, #c9c5ba 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.14),
+    0 0.5px 0 1px var(--duo-plateau-lip),
+    inset 0 1px 2px rgba(0, 0, 0, 0.16);
+}
+
+/* The logo: one silver tone, mirror-polished — a soft diagonal sheen across
+   it (the gradient lives in the SVG) and a faint bright lip on its lower edge */
+.duo-logo {
+  position: absolute;
+  left: 50%;
+  top: 51%;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0.75px 0 var(--duo-logo-lip));
+}
+
+.duo-logo .a {
+  stop-color: var(--duo-logo-a);
+}
+
+.duo-logo .sheen {
+  stop-color: var(--duo-logo-sheen);
+}
+
+.duo-logo .b {
+  stop-color: var(--duo-logo-b);
+}
+
+/* Square on the hinge side, rounded on the free side — a "D" */
+.preview-side[data-device='duo'] .phone-screen {
+  border-radius: 6px 60px 60px 6px;
+}
+
+/* ---- Inner screen: 890×626pt held landscape ----
+   Open, the back half sits behind the right side, so its buttons mirror over */
+
+.preview-side[data-device='duo-open'] .phone-frame {
+  width: 842px; /* (890pt + 2 × 8px bezel) × 0.92 zoom + rim */
+  height: 599px; /* (626pt + 2 × 8px bezel) × 0.92 zoom + rim */
+  border-radius: 47px;
+}
+
+.preview-side[data-device='duo-open'] .phone-screen {
+  border-radius: 47px;
+}
+
+.preview-side[data-device='duo-open'] .side-btn.vol-up {
+  left: auto;
+  right: 96px;
+}
+
+.preview-side[data-device='duo-open'] .side-btn.vol-down {
+  left: auto;
+  right: 168px;
+}
+
+.preview-side[data-device='duo-open'] .side-btn.power {
+  top: 162px;
+  height: 106px;
+}
+
+.preview-side[data-device='duo-open'] .crease {
+  display: block;
+}
+
+/* The fold down the middle. Apple's nano-texture finish makes it barely
+   visible, so: one soft shadow and one soft highlight, laid over the content */
+.phone-screen .crease {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 12px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 0, 0, 0.028) 42%,
+    rgba(255, 255, 255, 0.04) 52%,
+    rgba(0, 0, 0, 0.02) 60%,
+    transparent
+  );
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* ---------------- Desktop mode (the 桌面 choice) ----------------
+   Same markup, different chrome: the device rail gives way to a plain
+   window so the wider measure is what you are judging. */
+.preview-side[data-width='desktop'] .phone-stage {
+  padding: 26px 28px 40px;
+}
+
+.preview-side[data-width='desktop'] .phone-frame {
+  width: 100%;
+  max-width: 860px;
+  height: auto;
+  padding: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.preview-side[data-width='desktop'] .side-btn,
+.preview-side[data-width='desktop'] .home-indicator {
+  display: none;
+}
+
+.preview-side[data-width='desktop'] .phone-screen {
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(60, 54, 44, 0.14);
+  border-radius: 14px;
+  box-sizing: border-box;
+  box-shadow: var(--shadow-lg);
+  /* 桌面模式：还原正常字号 */
+  zoom: 1;
+}
+
+.preview-side[data-width='desktop'] .desktop-bar {
+  display: flex;
+}
+
+.preview-side[data-width='desktop'] .statusbar {
+  display: none;
+}
+
+.preview-side[data-width='desktop'] .article-head {
+  padding: 34px 56px 0;
+}
+
+.preview-side[data-width='desktop'] .check-body {
+  padding: 8px 56px 8px;
+}
+
+.preview-side[data-width='desktop'] .article-footer {
+  padding: 14px 56px 24px;
+}
+
+/* ---------------- 底部 Toast（弹性弹出） ---------------- */
+
+.status {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #332f29;
+  color: #faf8f3;
+  border-radius: 999px;
+  padding: 11px 20px;
+  font-size: 13px;
+  box-shadow: 0 14px 40px rgba(30, 25, 18, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translate(-50%, 24px) scale(0.92);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s var(--ease), opacity 0.2s ease;
+  z-index: 80;
+  max-width: min(92vw, 480px);
+}
+
+.status.show {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+/* ---------------- 自定义滚动条 ---------------- */
+
+/*
+ * 统一所有可滚动容器的滚动条（之前只覆盖了编辑器/预览三处，
+ * 主题栏、文件树、大纲还是系统默认的粗滚动条，风格不一致）。
+ * 细轨道 + 静置时很淡、hover 才加深，避免在窄面板里喧宾夺主。
+ */
+/*
+ * 标准属性只留给不支持 ::-webkit-scrollbar 的引擎（主要是 Firefox）。
+ * 新版 Chrome 里 scrollbar-width/color 会整体接管、把下面的 ::-webkit-scrollbar
+ * 规则连同 hover 加深一起顶掉（实测滑块宽度会变成 11px 而不是设定的 9px），
+ * 所以用 @supports 把两套方案隔开，各自生效。
+ */
+@supports not selector(::-webkit-scrollbar) {
+  .code-edit .cm-scroller,
+  .phone-stage,
+  .article-scroll,
+  .rail-list,
+  .tree-body,
+  .outline-drawer {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(90, 82, 68, 0.28) transparent;
+  }
+}
+
+.code-edit .cm-scroller::-webkit-scrollbar,
+.phone-stage::-webkit-scrollbar,
+.article-scroll::-webkit-scrollbar,
+.rail-list::-webkit-scrollbar,
+.tree-body::-webkit-scrollbar,
+.outline-drawer::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.code-edit .cm-scroller::-webkit-scrollbar-track,
+.phone-stage::-webkit-scrollbar-track,
+.article-scroll::-webkit-scrollbar-track,
+.rail-list::-webkit-scrollbar-track,
+.tree-body::-webkit-scrollbar-track,
+.outline-drawer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.code-edit .cm-scroller::-webkit-scrollbar-thumb,
+.phone-stage::-webkit-scrollbar-thumb,
+.article-scroll::-webkit-scrollbar-thumb,
+.rail-list::-webkit-scrollbar-thumb,
+.tree-body::-webkit-scrollbar-thumb,
+.outline-drawer::-webkit-scrollbar-thumb {
+  background: rgba(90, 82, 68, 0.16);
+  border-radius: 999px;
+  /* 透明边框 + padding-box：让滑块看起来更细，又保留可点击宽度 */
+  border: 2.5px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.16s ease;
+}
+
+.code-edit .cm-scroller:hover::-webkit-scrollbar-thumb,
+.phone-stage:hover::-webkit-scrollbar-thumb,
+.article-scroll:hover::-webkit-scrollbar-thumb,
+.rail-list:hover::-webkit-scrollbar-thumb,
+.tree-body:hover::-webkit-scrollbar-thumb,
+.outline-drawer:hover::-webkit-scrollbar-thumb {
+  background: rgba(90, 82, 68, 0.3);
+  background-clip: padding-box;
+}
+
+.code-edit .cm-scroller::-webkit-scrollbar-thumb:hover,
+.phone-stage::-webkit-scrollbar-thumb:hover,
+.article-scroll::-webkit-scrollbar-thumb:hover,
+.rail-list::-webkit-scrollbar-thumb:hover,
+.tree-body::-webkit-scrollbar-thumb:hover,
+.outline-drawer::-webkit-scrollbar-thumb:hover {
+  background: rgba(90, 82, 68, 0.45);
+  background-clip: padding-box;
+}
+
+/* 两条滚动条交汇的直角块，默认会是一小片灰色 */
+.code-edit .cm-scroller::-webkit-scrollbar-corner,
+.phone-stage::-webkit-scrollbar-corner,
+.article-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------------- 响应式 ---------------- */
+
+@media (max-width: 900px) {
+  .workspace {
+    flex-direction: column;
+  }
+  /* 窄屏：主题栏从竖列改为顶部横向滑条 */
+  .theme-rail {
+    width: 100%;
+    margin: 0 0 12px;
+    padding: 10px 12px;
+  }
+  .rail-head {
+    padding-bottom: 8px;
+  }
+  .rail-list {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .theme-card {
+    flex: none;
+    width: 76px;
+  }
+  /* 窄屏：文件树也转为横向条带，避免吃掉过多竖向空间 */
+  .file-tree {
+    width: 100%;
+    margin: 0 0 12px;
+    max-height: 190px;
+  }
+  .split {
+    flex-direction: column;
+    /* 纵向排布时必须允许收缩，否则 split 会撑成内容高度并溢出工作区 */
+    min-height: 0;
+  }
+  .split-bar {
+    width: auto;
+    height: 16px;
+    margin: -4px 0;
+    cursor: row-resize;
+  }
+  .split-bar::after {
+    width: 44px;
+    height: 3px;
+  }
+  .split-pane.editor-side {
+    /* 覆盖拖拽写入的行内宽度：纵向布局下宽度应占满，由高度对分 */
+    width: 100% !important;
+    /* 基础样式的 max-width: calc(100% - 430px) 在窄屏会算成负值，把编辑器压成 0 */
+    max-width: none;
+    flex: 0 0 50%;
+  }
+  .split-pane.preview-side {
+    flex: 1 1 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ---------------- 顶栏下拉菜单（导出） ---------------- */
+
+.menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 178px;
+  background: rgba(255, 253, 250, 0.96);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(45, 40, 30, 0.14);
+  padding: 4px;
+  z-index: 80;
+  animation: menu-in 0.14s var(--ease);
+  transform-origin: top right;
+}
+
+.dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--ink);
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.12s ease;
+}
+
+.dropdown-menu button:hover {
+  background: var(--accent-soft);
+}
+
+.dropdown-menu .menu-icon {
+  flex: none;
+  color: var(--accent);
+}
+
+/* 次要说明：靠右、更轻，不与主标签抢读 */
+.dropdown-menu .menu-hint {
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.dropdown-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+
+/* ---------------- 主题栏底部：排版密度 ---------------- */
+
+.rail-foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.density-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(60, 54, 44, 0.055);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.density-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: background 0.16s var(--ease), color 0.16s var(--ease);
+}
+
+.density-btn:hover {
+  color: var(--ink);
+}
+
+.density-btn.active {
+  background: var(--panel-solid);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}

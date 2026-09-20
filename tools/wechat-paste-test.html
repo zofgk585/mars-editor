@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>公众号粘贴实测</title>
+<style>
+  :root { --ink:#34302a; --muted:#8a857a; --border:rgba(60,54,44,.14); --accent:#d97757; --panel:#fffdfa; }
+  body { margin:0; padding:32px 24px 64px; background:#f3f0ea; color:var(--ink);
+         font:15px/1.7 -apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; }
+  main { max-width:760px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 6px; }
+  .lede { color:var(--muted); margin:0 0 28px; font-size:13.5px; }
+  ol.steps { margin:0 0 28px; padding-left:20px; font-size:13.5px; color:var(--muted); }
+  .case { background:var(--panel); border:1px solid var(--border); border-radius:14px;
+          padding:18px 20px; margin-bottom:16px; }
+  .case h2 { font-size:15px; margin:0 0 4px; }
+  .case p { margin:0 0 14px; font-size:13px; color:var(--muted); }
+  .row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  button { font:inherit; font-size:13px; border:1px solid var(--border); background:#fff;
+           padding:7px 14px; border-radius:8px; cursor:pointer; }
+  button:hover { border-color:var(--accent); color:var(--accent); }
+  button.done { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .sample { border:1px dashed var(--border); border-radius:8px; padding:12px; margin-top:12px; background:#fff; }
+  .sample img { max-width:100%; display:block; }
+  .verdict { margin-top:32px; border-left:3px solid var(--accent); padding:2px 0 2px 14px;
+             font-size:13.5px; color:var(--muted); }
+  code { font:12.5px ui-monospace,Menlo,monospace; background:rgba(60,54,44,.06);
+         padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>公众号粘贴实测</h1>
+  <p class="lede">逐个点「复制」，粘进公众号后台编辑器，看哪几种图片活了下来。目的是确认编辑器现在的 data URI 方案能不能直接用，还是必须先上图床。</p>
+
+  <ol class="steps">
+    <li>用 Chrome / Edge 打开本页（Safari 的剪贴板行为不一样）。</li>
+    <li>登录公众号后台 → 新建图文 → 光标放进正文。</li>
+    <li>点下面某个「复制」，回到后台 <code>⌘V</code>，记下结果。</li>
+    <li>每测一个新建一段空行，别让几个用例混在一起。</li>
+  </ol>
+
+  <div class="case">
+    <h2>用例 1 · data URI 图片</h2>
+    <p>编辑器目前的做法：图片以 <code>&lt;img src="data:image/png;base64,…"&gt;</code> 内嵌。若粘贴后图没了或变成裂图，说明必须上图床。</p>
+    <div class="row"><button data-case="data">复制用例 1</button></div>
+    <div class="sample" id="sample-data"></div>
+  </div>
+
+  <div class="case">
+    <h2>用例 2 · https 远程图片</h2>
+    <p>图床方案：<code>&lt;img src="https://…"&gt;</code>。正常情况下公众号会自动抓取并转存进素材库。</p>
+    <div class="row"><button data-case="remote">复制用例 2</button></div>
+    <div class="sample" id="sample-remote"></div>
+  </div>
+
+  <div class="case">
+    <h2>用例 3 · 图文混排（两种图一起）</h2>
+    <p>一次粘贴里同时放 data URI 与 https 图，直接对照哪张留下了。文字的内联样式（字号 / 颜色 / 引用块）也一并检查。</p>
+    <div class="row"><button data-case="mixed">复制用例 3</button></div>
+  </div>
+
+  <div class="case">
+    <h2>用例 4 · 外部链接</h2>
+    <p>顺带确认外链粘进去之后是什么状态：还是可点的 <code>&lt;a&gt;</code>，还是被剥成纯文字。这决定要不要做「外链转文末脚注」。</p>
+    <div class="row"><button data-case="link">复制用例 4</button></div>
+  </div>
+
+  <p class="verdict">
+    判读：用例 1 的图没了 / 裂图 → 必须接图床，复制前把 data URI 换成 https。<br />
+    用例 1 活着但用例 2 也活着 → 两条路都能走，图床仍更稳（草稿在微信侧长期有效）。<br />
+    用例 4 的链接变成纯文字或不可点 → 值得做外链转脚注。
+  </p>
+</main>
+
+<script>
+/** 画一张带标签的测试图，返回 data URI —— 粘贴后一眼能认出是哪个用例 */
+function makeImage(label, bg) {
+  const c = document.createElement('canvas');
+  c.width = 320; c.height = 180;
+  const x = c.getContext('2d');
+  x.fillStyle = bg; x.fillRect(0, 0, 320, 180);
+  x.fillStyle = 'rgba(255,255,255,.25)';
+  for (let i = -180; i < 320; i += 40) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + 180, 180); x.lineWidth = 12; x.strokeStyle = 'rgba(255,255,255,.16)'; x.stroke(); }
+  x.fillStyle = '#fff';
+  x.font = 'bold 26px -apple-system, PingFang SC, sans-serif';
+  x.textAlign = 'center';
+  x.fillText(label, 160, 98);
+  return c.toDataURL('image/png');
+}
+
+const DATA_IMG = makeImage('DATA URI 图', '#d97757');
+/** 换成你自己的图床地址更贴近真实场景 */
+const REMOTE_IMG = 'https://picsum.photos/seed/mars-editor/320/180';
+
+const P = 'margin: 0 0 22px; font-size: 16px; line-height: 1.75; color: #34302a;';
+const IMG = 'display: block; max-width: 100%; margin: 22px auto; border-radius: 6px;';
+
+const CASES = {
+  data:
+    `<p style="${P}">用例 1：下面这张是 data URI 内嵌图。</p>` +
+    `<img src="${DATA_IMG}" alt="data uri" style="${IMG}" />`,
+  remote:
+    `<p style="${P}">用例 2：下面这张是 https 远程图。</p>` +
+    `<img src="${REMOTE_IMG}" alt="remote" style="${IMG}" />`,
+  mixed:
+    `<p style="${P}">用例 3：先 data URI，再 https，中间夹一段带<strong style="font-weight: 600; color: #c76545;">强调</strong>的正文。</p>` +
+    `<img src="${DATA_IMG}" alt="data uri" style="${IMG}" />` +
+    `<blockquote style="margin: 22px 0; padding: 12px 16px; border-left: 3px solid #d97757; background: #f9eee7; color: #6b6459;">引用块：检查内联样式有没有被清掉。</blockquote>` +
+    `<img src="${REMOTE_IMG}" alt="remote" style="${IMG}" />` +
+    `<p style="${P}">用例 3 结束。</p>`,
+  link:
+    `<p style="${P}">用例 4：这里有一个<a href="https://example.com/some-article" style="color: #d97757; text-decoration: none;">外部链接</a>，粘贴后看它还是不是可点的。</p>`,
+};
+
+/** 与编辑器同一套复制逻辑：优先 ClipboardItem，失败退回 execCommand */
+async function copyHtml(html) {
+  const plain = html.replace(/<[^>]+>/g, '').trim();
+  if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([plain], { type: 'text/plain' }),
+      })]);
+      return true;
+    } catch (e) { /* 退回下面 */ }
+  }
+  const box = document.createElement('div');
+  box.contentEditable = 'true';
+  box.style.cssText = 'position:fixed;left:-9999px;top:0';
+  box.innerHTML = html;
+  document.body.appendChild(box);
+  const range = document.createRange();
+  range.selectNodeContents(box);
+  const sel = getSelection();
+  sel.removeAllRanges(); sel.addRange(range);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  sel.removeAllRanges(); box.remove();
+  return ok;
+}
+
+document.getElementById('sample-data').innerHTML = `<img src="${DATA_IMG}" alt="预览" />`;
+document.getElementById('sample-remote').innerHTML = `<img src="${REMOTE_IMG}" alt="预览" />`;
+
+document.querySelectorAll('button[data-case]').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const ok = await copyHtml(CASES[btn.dataset.case]);
+    const label = btn.textContent;
+    btn.textContent = ok ? '已复制，去后台 ⌘V' : '复制失败';
+    btn.classList.toggle('done', ok);
+    setTimeout(() => { btn.textContent = label; btn.classList.remove('done'); }, 2400);
+  });
+});
+</script>
+</body>
+</html>
